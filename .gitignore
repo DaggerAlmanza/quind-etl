@@ -164,3 +164,8 @@ cython_debug/
 cleaned_data_*.xlsx
 data_analysis.log
 info/
+film*.csv
+customer*.csv
+inventory*.csv
+store*.csv
+rental*.csv
