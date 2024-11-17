@@ -22,7 +22,7 @@ class DataProcessor:
 
         :param file_path: Ruta del archivo Excel a cargar.
         """
-        # Verificar si el archivo existeexcel_file
+        # Verificar si el archivo existe
         return os.path.isfile(file_path)
 
     def check_columns(self, file_path: str) -> list:
@@ -69,10 +69,13 @@ class DataProcessor:
             "basic_stats": self.df.describe().to_dict()
         }
 
-        # Valores únicos para columnas categóricas
-        categorical_columns = self.df.select_dtypes(include=["object"]).columns
-        unique_values = {col: self.df[col].nunique() for col in categorical_columns}
-        analysis_report["unique_values"] = unique_values
+        # Valores únicos para columnas categóricas film
+        if table_name == "film":
+            categorical_columns = self.df.select_dtypes(include=["object"]).columns
+            unique_values = {col: self.df[col].nunique() for col in categorical_columns}
+            analysis_report["unique_values"] = unique_values
+            # eliminar duplicados
+            self.df.drop_duplicates(subset=list(self.df.select_dtypes(include=["object"]).columns), inplace=True)
 
         # Registro en logger
         self.logger.info("Reporte de pre-análisis realizado")
@@ -81,8 +84,11 @@ class DataProcessor:
     @staticmethod
     def extract_numeric_values(value):
         """Extrae el valor numérico de una cadena, si es posible."""
-        match = re.search(r'\d+', str(value))
-        return int(match.group()) if match else value
+        match = re.search(r'\d+(\.\d+)?', str(value))
+        try:
+            return int(match.group()) if match else value
+        except ValueError:
+            return float(match.group()) if match else value
 
     def handle_non_numeric_values(
         self, column: str, table_name: str, action: str = "recover"
@@ -255,8 +261,21 @@ class DataProcessor:
         merged_df = merged_df.merge(customer_df, on="customer_id")
         self.df = merged_df
 
-    def save_data(self):
+    def save_data(self, is_separate_the_tables: bool = False):
         output_file = f"cleaned_data_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         with pd.ExcelWriter(output_file) as writer:
-            self.df.to_excel(writer, sheet_name="clean_data", index=False)
+            if is_separate_the_tables:
+                for table_name, df in self.df.items():
+                    df.to_excel(writer, sheet_name=table_name, index=False)
+            else:
+                self.df.to_excel(writer, sheet_name="clean_data", index=False)
             self.logger.info(f"Datos limpios guardados en: {output_file}")
+
+    def change_dataframe(self, dataframes: pd.DataFrame):
+        """
+        Cambia el DataFrame actual por uno nuevo
+
+        Args:
+            dataframes: diccionario con los DataFrames {nombre_tabla: DataFrame}
+        """
+        self.df = dataframes

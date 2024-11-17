@@ -5,6 +5,7 @@ from data import DataProcessor, REQUIRED_SHEETS
 logging = Logging()
 logger = logging.setup_logging()
 processor = DataProcessor(logger)
+is_separate_the_tables = True
 
 
 def main():
@@ -45,6 +46,10 @@ def main():
                 logger.error(f"Error al procesar la tabla {table}: {str(e)}")
 
         processor.verify_relationships(dataframes)
+        if is_separate_the_tables:
+            processor.change_dataframe(dataframes)
+            processor.save_data(is_separate_the_tables)
+            return None
         processor.merge_tables(dataframes)
         processor.save_data()
 

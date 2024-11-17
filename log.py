@@ -4,10 +4,11 @@ import pandas as pd
 
 
 class Logging:
+    """Clase para manejar configuraciones y reportes de logging."""
 
     @staticmethod
     def setup_logging():
-        """Configura el sistema de logging para que use un único archivo y agregue nuevos registros."""
+        """Configura el sistema de logging."""
         log_filename = "data_analysis.log"
 
         logging.basicConfig(
@@ -21,26 +22,22 @@ class Logging:
         return logging.getLogger(__name__)
 
     @staticmethod
-    def report_data_issues(
-        table_name: str,
-        data_issues: dict
-    ):
+    def report_data_issues(table_name: str, data_issues: dict):
         """
-        Crea un archivo CSV para registrar problemas de calidad de datos.
+        Genera un archivo CSV con problemas de calidad de datos.
 
-        :param table_name: Nombre de la tabla afectada.
-        :param data_issues: DataFrame con los datos problemáticos.
+        Args:
+            table_name (str): Nombre de la tabla afectada.
+            data_issues (dict): Diccionario con datos problemáticos.
         """
         logger = Logging.setup_logging()
-        # Crear el nombre del archivo con fecha y hora completa
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         file_name = f"{table_name}_{timestamp}.csv"
-        df = pd.DataFrame(data_issues)
 
-        try:
-            # Guardar el DataFrame como un archivo CSV
-            if not df.empty:  # Verificar si el DataFrame tiene datos
+        df = pd.DataFrame(data_issues)
+        if not df.empty:
+            try:
                 df.to_csv(file_name, index=True)
                 logger.info(f"Archivo CSV generado: {file_name}")
-        except Exception as e:
-            logger.error(f"Error al guardar el archivo CSV para {table_name}: {str(e)}")
+            except Exception as e:
+                logger.error(f"Error al guardar el archivo CSV para {table_name}: {str(e)}")
